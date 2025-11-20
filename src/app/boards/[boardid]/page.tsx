@@ -70,30 +70,72 @@ export default function BoardPage() {
       router.push("/login");
       return;
     }
-    if (!boardId) return;
+    if (!boardId) {
+      setLoading(false);
+      return;
+    }
 
-    loadBoard();
+    let isMounted = true;
+    loadBoard().then(() => {
+      if (!isMounted) {
+        setLoading(false);
+      }
+    });
+
+    const timeout = setTimeout(() => {
+      if (isMounted) {
+        console.error("Board loading timeout - forcing stop");
+        setLoading(false);
+      }
+    }, 15000);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeout);
+    };
   }, [boardId, router]);
 
   async function loadBoard() {
     const token = localStorage.getItem("token");
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    if (!boardId) {
+      setLoading(false);
+      return;
+    }
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       const res = await fetch(`/api/boards/${boardId}`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
 
-      const data = await res.json();
+      clearTimeout(timeoutId);
 
-      if (res.ok) {
-        setBoard(data);
-      } else {
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: "Failed to load board" }));
+        console.error("Failed to load board:", res.status, errorData);
         setBoard(null);
+        setLoading(false);
+        return;
       }
-    } catch (err) {
-      console.log("Error loading board", err);
+
+      const data = await res.json();
+      setBoard(data);
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        console.error("Request timeout loading board");
+      } else {
+        console.error("Error loading board:", err);
+      }
       setBoard(null);
+      setLoading(false);
     } finally {
       setLoading(false);
     }

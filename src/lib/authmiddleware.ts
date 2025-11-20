@@ -4,6 +4,11 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 
 export async function Verifyauth(req: NextRequest) {
   try {
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is not set");
+      return NextResponse.json({ message: "Server configuration error" }, { status: 500 });
+    }
+
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -15,8 +20,12 @@ export async function Verifyauth(req: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
     
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload;
     const userId = decoded.userId;
+    
+    if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
     
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -28,7 +37,11 @@ export async function Verifyauth(req: NextRequest) {
     }
     
     return user;
-  } catch (err) {
+  } catch (err: any) {
+    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+    console.error("Auth error:", err);
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 }
