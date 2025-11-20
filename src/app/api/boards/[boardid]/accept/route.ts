@@ -4,7 +4,7 @@ import { NextResponse, NextRequest } from "next/server";
 
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ boardId: string }> }
+  context: { params: Promise<{ boardid: string }> }
 ) {
   const user = await Verifyauth(req);
   if (user instanceof NextResponse) {
@@ -13,7 +13,8 @@ export async function POST(
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const { boardId } = await context.params;
+  const params = await context.params;
+  const { boardid: boardId } = params;
 
   const existingMember = await prisma.boardMember.findFirst({
     where: {
