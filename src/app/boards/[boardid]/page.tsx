@@ -40,7 +40,7 @@ type Board = {
 
 export default function BoardPage() {
   const params = useParams();
-  const boardId = params.boardId as string;
+  const boardId = (params.boardId || params.boardid) as string;
   const router = useRouter();
 
   const [board, setBoard] = useState<Board | null>(null);
@@ -107,6 +107,10 @@ export default function BoardPage() {
       return;
     }
 
+    if (process.env.NODE_ENV === "development") {
+      console.log("Loading board:", boardId);
+    }
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -127,6 +131,14 @@ export default function BoardPage() {
       }
 
       const data = await res.json();
+
+      if (!data || !data.id || data.error) {
+        console.error("Invalid board data or error received:", data);
+        setBoard(null);
+        setLoading(false);
+        return;
+      }
+
       setBoard(data);
     } catch (err: any) {
       if (err.name === 'AbortError') {
