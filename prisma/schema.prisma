@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String?
+  email        String        @unique
+  password     String
+  createdAt    DateTime      @default(now())
+  boardsOwned  Board[]       @relation("BoardOwner")
+  boardMembers BoardMember[]
+  cardsCreated Card[]        @relation("CardCreator")
+}
+
+model Board {
+  id              String           @id @default(uuid())
+  title           String
+  createdAt       DateTime         @default(now())
+  ownerId         String
+  owner           User             @relation("BoardOwner", fields: [ownerId], references: [id])
+  members         BoardMember[]
+  lists           List[]           @relation("BoardToLists")
+  cards           Card[]           @relation("BoardToCards")
+  recommendations Recommendation[]
+}
+
+model BoardMember {
+  id        String   @id @default(uuid())
+  role      String   @default("member")
+  createdAt DateTime @default(now())
+  boardId   String
+  userId    String
+  board     Board    @relation(fields: [boardId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([boardId, userId])
+}
+
+model List {
+  id        String   @id @default(uuid())
+  title     String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  boardId   String
+  board     Board    @relation("BoardToLists", fields: [boardId], references: [id])
+  cards     Card[]   @relation("ListToCards")
+}
+
+model Card {
+  id              String           @id @default(uuid())
+  title           String
+  description     String?
+  dueDate         DateTime?
+  position        Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  listId          String
+  list            List             @relation("ListToCards", fields: [listId], references: [id])
+  boardId         String
+  board           Board            @relation("BoardToCards", fields: [boardId], references: [id])
+  createdById     String
+  createdBy       User             @relation("CardCreator", fields: [createdById], references: [id])
+  recommendations Recommendation[]
+}
+
+model Recommendation {
+  id        String   @id @default(uuid())
+  type      String
+  score     Float?
+  payload   Json
+  createdAt DateTime @default(now())
+  boardId   String
+  cardId    String?
+  board     Board    @relation(fields: [boardId], references: [id])
+  card      Card?    @relation(fields: [cardId], references: [id])
+}
