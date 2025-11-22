@@ -6,6 +6,7 @@ Hey! This is Trellify - my take on a task management app. Built it with Next.js 
 
 So basically it's a kanban board app. You know, like Trello but simpler. You create boards, add lists to them, throw in some cards. Pretty standard stuff. But I added this recomendations feature that suggests stuff like which cards need attention, when to move things around, etc. It's not super smart but it works.
 
+
 ## What can it do?
 
 - **Boards & Lists**: Make boards, add lists. Default ones are "To Do", "In Progress", and "Done" but you can add more or rename them
