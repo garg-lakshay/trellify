@@ -46,4 +46,5 @@ export async function sendBoardInvite(
         console.error("Error sending email:", error);
         return { success: false, error };
     }
+    
 }
