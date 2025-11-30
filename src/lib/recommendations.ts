@@ -140,6 +140,7 @@ export async function generateRecommendations(boardId: string): Promise<void> {
     const cardsWithDueDates = allCards.filter(card => {
         return card.dueDate !== null;
     });
+    
 
     if (cardsWithDueDates.length === 1) {
         const card = cardsWithDueDates[0];
